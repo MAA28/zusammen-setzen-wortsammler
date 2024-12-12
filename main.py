@@ -1,6 +1,8 @@
 import requests
 from tqdm import tqdm
 from bs4 import BeautifulSoup
+import threading
+import queue
 
 
 class CompoundNoun:
@@ -34,7 +36,8 @@ def bisect_word(compound_noun):
 
         if len(words) == 2:
             connectorParticle = compound_noun.strip(words[0]).rstrip(words[1])
-            return CompoundNoun(words[0], connectorParticle, words[1])
+            if words[0] + connectorParticle + words[1] == compound_noun:
+                return CompoundNoun(words[0], connectorParticle, words[1])
 
     return None
 
@@ -82,11 +85,34 @@ def bisectAllWords(start=0):
     with open('words.txt', 'r') as file:
         words = file.read().split('\n')
 
-    for word in tqdm(words[start:], desc='Bisecting all words'):
-        compoundNoun = bisect_word(word)
-        if compoundNoun is not None:
-            with open('compoundNouns.csv', 'a') as file:
-                file.write(compoundNoun.toCSVLine())
+    q = queue.Queue()
+
+    bar = tqdm(total=len(words[start:]))
+
+    def worker():
+        while True:
+            word = q.get()
+
+            compoundNoun = bisect_word(word)
+
+            if compoundNoun is not None:
+                tqdm.write(f'Saving word: {compoundNoun}')
+                with open('compoundNouns.csv', 'a') as file:
+                    file.write(compoundNoun.toCSVLine())
+
+            q.task_done()
+
+    for i in range(50):
+        threading.Thread(target=worker, daemon=True).start()
+
+    for word in words[start:]:
+        q.put(word)
+
+    while q.qsize() != 0:
+        bar.n = len(words) - q.qsize()
+        bar.refresh()
+
+    q.join()
 
 
 def main():
