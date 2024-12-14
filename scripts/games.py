@@ -81,7 +81,7 @@ def main():
 
     puzzles = generatePuzzle(dfSorted, n)
 
-    strings = generateStrings(puzzles, len(puzzles), 10000)
+    strings = generateStrings(puzzles, len(puzzles), 100000)
 
     with open('../data/puzzles.txt', 'w') as file:
         for string in tqdm(strings, desc='Saving...'):
