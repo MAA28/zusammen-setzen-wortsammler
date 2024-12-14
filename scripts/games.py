@@ -39,6 +39,7 @@ def printPuzzles(puzzles, n, string = ""):
 
     for puzzle in puzzles[1]:
         new_string =  string + '-' + puzzles[0]
+        print(puzzle)
         if puzzle[1] == []:
             if new_string.count('-') == n:
                 print(new_string[1:])
