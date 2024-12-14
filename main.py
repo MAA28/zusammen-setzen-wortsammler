@@ -158,6 +158,9 @@ def getFrequency(word):
 
 
 def getFrequencies():
+    with open('compoundNounsWithoutFaultyAndUnwantedWithFrequencies.csv', 'w') as file:
+        file.write('firstNoun,connectorParticle,secondNoun,frequency\n')
+
     with open('compoundNounsWithoutFaultyAndUnwanted.csv', 'r') as file:
         compoundNouns = []
         text = file.read()
@@ -167,7 +170,7 @@ def getFrequencies():
 
     q = queue.Queue()
 
-    bar = tqdm(total=len(compoundNouns[start:]))
+    bar = tqdm(total=len(compoundNouns))
 
     def worker():
         while True:
@@ -179,7 +182,7 @@ def getFrequencies():
                 tqdm.write(f'Saving word: {
                            compoundNoun} with frequncy of {frequency}')
                 with open('compoundNounsWithoutFaultyAndUnwantedWithFrequencies.csv', 'a') as file:
-                    file.write(compoundNoun.toCSVLine() + f',{frequency}')
+                    file.write(compoundNoun.toCSVLine() + f',{frequency}\n')
 
             q.task_done()
 
@@ -198,6 +201,7 @@ def getFrequencies():
 
 def main():
     getFrequencies()
+    print(getFrequency("Arbeit"))
 
 
 if __name__ == '__main__':
