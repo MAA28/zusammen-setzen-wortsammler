@@ -22,19 +22,20 @@ def nextWord(df: pd.DataFrame, name: str):
     return selectRandomlyWeighted(dfMasked)
 
 def generatePuzzle(df: pd.DataFrame, n):
-    queue = [row['firstNoun'] for i, row in df.iterrows()]
+    queue = [[row['firstNoun']] for i, row in df.iterrows()]
 
 
     for i in trange(n):
         new_queue = []
         for item in tqdm(queue, desc=f'All words at depth {i}'):
-            name = item.split('-')[-1]
+            name = item[-1]
             dfMasked = df[df['firstNoun'] == name]
             for i, row in dfMasked.iterrows():
-                new_queue.append(item + '-' + row['secondNoun'])
+                new_queue.append(item + [row['secondNoun']])
         queue = new_queue
             
     
+    return queue
 
     
 def printPuzzles(puzzles, n, string = ""):
@@ -55,17 +56,21 @@ def main():
     dfWithoutConnectors = dfCapped[dfCapped['connectorParticle'].isna()]
     dfSorted = dfWithoutConnectors.sort_values('frequency', ascending=False)
 
-    n = 2
+    n = 6
 
     puzzles = generatePuzzle(dfSorted, n)
-    print(puzzles)
+    # pprint(puzzles)
     # printPuzzles(puzzles, n)
 
 
 
 
-
-
+# Unviable (exponetial growth)
+# 0	5334
+# 1	90004
+# 2	401605
+# 3	1801881
+# 4	8100692
 
 
 
