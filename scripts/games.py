@@ -2,6 +2,8 @@ import pandas as pd
 from pprint import pprint
 import numpy as np
 from tqdm import tqdm, trange
+from random import sample
+
 
 def selectRandomlyWeighted(df: pd.DataFrame):
     weights = df['frequency'] / df['frequency'].sum()
@@ -13,64 +15,79 @@ def selectRandomlyWeighted(df: pd.DataFrame):
     return selected_row
 
 
+def selectRandomly(array: [], n):
+    new_array = []
+    for i in sample(range(len(array), n)):
+        new_array.append(array[i])
+    return new_array
+
+
 def nextWord(df: pd.DataFrame, name: str):
     dfMasked = df[df['firstNoun'] == name]
     if dfMasked.shape[0] == 0:
         return None
-    
+
     print(dfMasked)
     return selectRandomlyWeighted(dfMasked)
 
+
 def generatePuzzle(df: pd.DataFrame, n):
-    queue = [[row['firstNoun']] for i, row in df.iterrows()]
+    keyValuePairs = [(row['firstNoun'], set()) for i, row in df.iterrows()]
+    puzzles = [dict(keyValuePairs)]
 
-
-    for i in trange(n):
-        new_queue = []
-        for item in tqdm(queue, desc=f'All words at depth {i}'):
-            name = item[-1]
-            dfMasked = df[df['firstNoun'] == name]
+    for i in trange(n - 1):
+        keyValuePairs = puzzles[-1].keys()
+        puzzles.append({})
+        for item in tqdm(keyValuePairs, desc=f'All words at depth {i}'):
+            dfMasked = df[df['firstNoun'] == item]
             for i, row in dfMasked.iterrows():
-                new_queue.append(item + [row['secondNoun']])
-        queue = new_queue
-            
-    
-    return queue
+                name = row['secondNoun']
+                puzzles[-1][name] = set()
+                puzzles[-2][item].add(name)
 
-    
-def printPuzzles(puzzles, n, string = ""):
-    string = string + '-' + puzzles[0] 
-    if puzzles[1] == []:
-        if string[1:].count('-') == n:
-           print(string[2:])
+    return puzzles[:-1]
 
-    for puzzle in puzzles[1]:
-        printPuzzles(puzzle, n, string)
+
+def generateStrings(puzzles, n, k):
+    puzzle_strings = []
+
+    for word in puzzles[0]:
+        puzzle_strings.append(word)
+
+    for puzzle in tqdm(puzzles, desc="Working through the iterations"):
+        new_puzzle_strings = []
+        for puzzle_string in tqdm(puzzle_strings):
+            last = puzzle_string.split('-')[-1]
+            if last in puzzle.keys():
+                for next in puzzle[last]:
+                    new_puzzle_strings.append(puzzle_string + '-' + next)
+        puzzle_strings = new_puzzle_strings if len(
+            new_puzzle_strings) < k else sample(new_puzzle_strings, k)
+
+    return puzzle_strings
 
 
 def main():
-    df = pd.read_csv('data/compoundNounsWithoutFaultyAndUnwantedWithFrequencies.csv')
+    df = pd.read_csv(
+        '../data/compoundNounsWithoutFaultyAndUnwantedWithFrequencies.csv')
     dfShortendFirstNoun = df[df['firstNoun'].str.len() <= 10]
-    dfShortendSecondNoun = dfShortendFirstNoun[dfShortendFirstNoun['secondNoun'].str.len() <= 10]
+    dfShortendSecondNoun = dfShortendFirstNoun[dfShortendFirstNoun['secondNoun'].str.len(
+    ) <= 10]
     dfCapped = dfShortendSecondNoun[dfShortendSecondNoun['frequency'] > 1000]
     dfWithoutConnectors = dfCapped[dfCapped['connectorParticle'].isna()]
     dfSorted = dfWithoutConnectors.sort_values('frequency', ascending=False)
 
-    n = 6
+    n = 10
 
     puzzles = generatePuzzle(dfSorted, n)
-    # pprint(puzzles)
-    # printPuzzles(puzzles, n)
+
+    strings = generateStrings(puzzles, len(puzzles), 10000)
+
+    with open('../data/puzzles.txt', 'w') as file:
+        for string in tqdm(strings, desc='Saving...'):
+            file.write(string + '\n')
 
 
-
-
-# Unviable (exponetial growth)
-# 0	5334
-# 1	90004
-# 2	401605
-# 3	1801881
-# 4	8100692
 
 
 

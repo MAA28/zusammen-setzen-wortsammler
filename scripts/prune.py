@@ -1,14 +1,14 @@
 from compoundNoun import CompoundNoun
 
 def removeFaultyAndUnwantedCompoundNouns():
-    with open('data/compoundNouns.csv', 'r') as file:
+    with open('../data/compoundNouns.csv', 'r') as file:
         compoundNouns = []
         text = file.read()
         lines = text.split('\n')
         compoundNouns = [CompoundNoun.fromCSVLine(
             line) for line in lines[1:-1]]
 
-    with open('data/words.txt', 'r') as file:
+    with open('../data/words.txt', 'r') as file:
         words = file.read().split('\n')
 
     keepers = []
@@ -21,7 +21,7 @@ def removeFaultyAndUnwantedCompoundNouns():
     print(f'Keeping {len(keepers)} / {len(compoundNouns)
                                       } ({len(keepers) / len(compoundNouns):.2%})')
 
-    with open('data/compoundNounsWithoutFaultyAndUnwanted.csv', 'w') as file:
+    with open('../data/compoundNounsWithoutFaultyAndUnwanted.csv', 'w') as file:
         file.write("firstNoun,connectorParticle,secondNoun\n")
         file.write('\n'.join([keeper.toCSVLine() for keeper in keepers]))
 

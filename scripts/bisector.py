@@ -22,7 +22,7 @@ def bisect_word(compound_noun):
 
 def bisectAllWords(start=0):
 
-    with open('data/compoundNouns.csv', 'w') as file:
+    with open('../data/compoundNouns.csv', 'w') as file:
         file.write("firstNoun,connectorParticle,secondNoun\n")
 
     with open('words.txt', 'r') as file:
@@ -40,7 +40,7 @@ def bisectAllWords(start=0):
 
             if compoundNoun is not None:
                 tqdm.write(f'Saving word: {compoundNoun}')
-                with open('data/compoundNouns.csv', 'a') as file:
+                with open('../data/compoundNouns.csv', 'a') as file:
                     file.write(compoundNoun.toCSVLine())
 
             q.task_done()

@@ -9,10 +9,10 @@ def getFrequency(word):
 
 
 def getFrequencies():
-    with open('data/compoundNounsWithoutFaultyAndUnwantedWithFrequencies.csv', 'w') as file:
+    with open('../data/compoundNounsWithoutFaultyAndUnwantedWithFrequencies.csv', 'w') as file:
         file.write('firstNoun,connectorParticle,secondNoun,frequency\n')
 
-    with open('data/compoundNounsWithoutFaultyAndUnwanted.csv', 'r') as file:
+    with open('../data/compoundNounsWithoutFaultyAndUnwanted.csv', 'r') as file:
         compoundNouns = []
         text = file.read()
         lines = text.split('\n')
@@ -32,7 +32,7 @@ def getFrequencies():
             if frequency is not None:
                 tqdm.write(f'Saving word: {
                            compoundNoun} with frequncy of {frequency}')
-                with open('data/compoundNounsWithoutFaultyAndUnwantedWithFrequencies.csv', 'a') as file:
+                with open('../data/compoundNounsWithoutFaultyAndUnwantedWithFrequencies.csv', 'a') as file:
                     file.write(compoundNoun.toCSVLine() + f',{frequency}\n')
 
             q.task_done()

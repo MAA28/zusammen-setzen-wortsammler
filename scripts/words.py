@@ -31,7 +31,7 @@ def getAllWords():
 def saveAllWords():
     words = getAllWords()
 
-    with open('data/words.txt', 'w') as file:
+    with open('../data/words.txt', 'w') as file:
         file.write('\n'.join(words))
 
 
