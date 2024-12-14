@@ -1,5 +1,7 @@
 import pandas as pd
+from pprint import pprint
 import numpy as np
+from tqdm import tqdm, trange
 
 def selectRandomlyWeighted(df: pd.DataFrame):
     weights = df['frequency'] / df['frequency'].sum()
@@ -19,25 +21,21 @@ def nextWord(df: pd.DataFrame, name: str):
     print(dfMasked)
     return selectRandomlyWeighted(dfMasked)
 
-def generatePuzzle(df: pd.DataFrame, n, seed: str = ''):
-    dfUsing = df[df['firstNoun'] == seed] if seed != '' else df
+def generatePuzzle(df: pd.DataFrame, n):
+    queue = [row['firstNoun'] for i, row in df.iterrows()]
 
-    puzzles = [seed, []]
 
-    for index, row in dfUsing.iterrows():
-        if n != 0:
-           puzzles[1].append(generatePuzzle(df, n - 1, row['secondNoun']))
+    for i in trange(n):
+        new_queue = []
+        for item in tqdm(queue, desc=f'All words at depth {i}'):
+            name = item.split('-')[-1]
+            dfMasked = df[df['firstNoun'] == name]
+            for i, row in dfMasked.iterrows():
+                new_queue.append(item + '-' + row['secondNoun'])
+        queue = new_queue
+            
+    
 
-    all_empty = True
-
-    for puzzle in puzzles[1]:
-        if len(puzzle) != 0:
-            all_empty = False
-
-    if all_empty:
-        return [seed, []]
-
-    return puzzles
     
 def printPuzzles(puzzles, n, string = ""):
     string = string + '-' + puzzles[0] 
@@ -57,11 +55,11 @@ def main():
     dfWithoutConnectors = dfCapped[dfCapped['connectorParticle'].isna()]
     dfSorted = dfWithoutConnectors.sort_values('frequency', ascending=False)
 
-    n = 3
+    n = 2
 
     puzzles = generatePuzzle(dfSorted, n)
     print(puzzles)
-    printPuzzles(puzzles, n)
+    # printPuzzles(puzzles, n)
 
 
 
