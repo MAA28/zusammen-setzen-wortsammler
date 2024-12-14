@@ -3,6 +3,7 @@ from tqdm import tqdm
 from bs4 import BeautifulSoup
 import threading
 import queue
+import re
 
 
 class CompoundNoun:
@@ -17,8 +18,15 @@ class CompoundNoun:
         else:
             return f'{self.firstNoun} + {self.connectorParticle} + {self.secondNoun}'
 
+    def reconstruct(self):
+        return f'{self.firstNoun}{self.connectorParticle}{self.secondNoun}'
+
     def toCSVLine(self):
-        return f'{self.firstNoun},{self.connectorParticle},{self.secondNoun}\n'
+        return f'{self.firstNoun},{self.connectorParticle},{self.secondNoun}'
+
+    def fromCSVLine(line):
+        values = line.split(',')
+        return CompoundNoun(values[0], values[1], values[2])
 
 
 def bisect_word(compound_noun):
@@ -115,8 +123,81 @@ def bisectAllWords(start=0):
     q.join()
 
 
+def removeFaultyAndUnwantedCompoundNouns():
+    with open('compoundNouns.csv', 'r') as file:
+        compoundNouns = []
+        text = file.read()
+        lines = text.split('\n')
+        compoundNouns = [CompoundNoun.fromCSVLine(
+            line) for line in lines[1:-1]]
+
+    with open('words.txt', 'r') as file:
+        words = file.read().split('\n')
+
+    keepers = []
+
+    for compoundNoun in tqdm(compoundNouns):
+        reconstruction = compoundNoun.reconstruct()
+        if reconstruction in words and re.match(r'^[A-Z]+$', reconstruction):
+            keepers.append(compoundNoun)
+
+    print(f'Keeping {len(keepers)} / {len(compoundNouns)
+                                      } ({len(keepers) / len(compoundNouns):.2%})')
+
+    with open('compoundNounsWithoutFaultyAndUnwanted.csv', 'w') as file:
+        file.write("firstNoun,connectorParticle,secondNoun\n")
+        file.write('\n'.join([keeper.toCSVLine() for keeper in keepers]))
+
+
+def getFrequency(word):
+    url = f'https://www.dwds.de/frequency/?corpus=dwdsxl&q={word}'
+    response = requests.request('GET', url)
+
+    if response.status_code == 200:
+        return int(response.text[1:-1])
+
+
+def getFrequencies():
+    with open('compoundNounsWithoutFaultyAndUnwanted.csv', 'r') as file:
+        compoundNouns = []
+        text = file.read()
+        lines = text.split('\n')
+        compoundNouns = [CompoundNoun.fromCSVLine(
+            line) for line in lines[1:-1]]
+
+    q = queue.Queue()
+
+    bar = tqdm(total=len(compoundNouns[start:]))
+
+    def worker():
+        while True:
+            compoundNoun = q.get()
+            word = compoundNoun.reconstruct()
+
+            frequency = getFrequency(word)
+            if frequency is not None:
+                tqdm.write(f'Saving word: {
+                           compoundNoun} with frequncy of {frequency}')
+                with open('compoundNounsWithoutFaultyAndUnwantedWithFrequencies.csv', 'a') as file:
+                    file.write(compoundNoun.toCSVLine() + f',{frequency}')
+
+            q.task_done()
+
+    for i in range(50):
+        threading.Thread(target=worker, daemon=True).start()
+
+    for compoundNoun in compoundNouns:
+        q.put(compoundNoun)
+
+    while q.qsize() != 0:
+        bar.n = len(compoundNouns) - q.qsize()
+        bar.refresh()
+
+    q.join()
+
+
 def main():
-    bisectAllWords()
+    getFrequencies()
 
 
 if __name__ == '__main__':
