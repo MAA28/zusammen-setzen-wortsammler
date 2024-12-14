@@ -19,32 +19,34 @@ def nextWord(df: pd.DataFrame, name: str):
     print(dfMasked)
     return selectRandomlyWeighted(dfMasked)
 
-def generatePuzzle(seed: str, df: pd.DataFrame, n):
-    dfMasked = df[df['firstNoun'] == seed]
+def generatePuzzle(df: pd.DataFrame, n, seed: str = ''):
+    dfUsing = df[df['firstNoun'] == seed] if seed != '' else df
 
     puzzles = [seed, []]
 
-    for index, row in dfMasked.iterrows():
+    for index, row in dfUsing.iterrows():
         if n != 0:
-           puzzles[1].append(generatePuzzle(row['secondNoun'], df, n - 1))
+           puzzles[1].append(generatePuzzle(df, n - 1, row['secondNoun']))
+
+    all_empty = True
+
+    for puzzle in puzzles[1]:
+        if len(puzzle) != 0:
+            all_empty = False
+
+    if all_empty:
+        return [seed, []]
 
     return puzzles
     
 def printPuzzles(puzzles, n, string = ""):
+    string = string + '-' + puzzles[0] 
     if puzzles[1] == []:
-        if string.count('-') == n:
-            pass
-            print(string[1:])
-
+        if string[1:].count('-') == n:
+           print(string[2:])
 
     for puzzle in puzzles[1]:
-        new_string =  string + '-' + puzzles[0]
-        print(puzzle)
-        if puzzle[1] == []:
-            if new_string.count('-') == n:
-                print(new_string[1:])
-        else:
-            printPuzzles(puzzle, n, new_string)
+        printPuzzles(puzzle, n, string)
 
 
 def main():
@@ -57,7 +59,8 @@ def main():
 
     n = 3
 
-    puzzles = generatePuzzle('MARKT', dfSorted, n)
+    puzzles = generatePuzzle(dfSorted, n)
+    print(puzzles)
     printPuzzles(puzzles, n)
 
 
