@@ -61,8 +61,8 @@ def generateStrings(puzzles, n, k):
             if last in puzzle.keys():
                 for next in puzzle[last]:
                     new_puzzle_strings.append(puzzle_string + '-' + next)
-        puzzle_strings = new_puzzle_strings if len(
-            new_puzzle_strings) < k else sample(new_puzzle_strings, k)
+        puzzle_strings = sample(new_puzzle_strings, k if len(
+            new_puzzle_strings) > k else len(new_puzzle_strings))
 
     return puzzle_strings
 
@@ -70,14 +70,14 @@ def generateStrings(puzzles, n, k):
 def main():
     df = pd.read_csv(
         '../data/compoundNounsWithoutFaultyAndUnwantedWithFrequencies.csv')
-    dfShortendFirstNoun = df[df['firstNoun'].str.len() <= 10]
+    dfShortendFirstNoun = df[df['firstNoun'].str.len() <= 15]
     dfShortendSecondNoun = dfShortendFirstNoun[dfShortendFirstNoun['secondNoun'].str.len(
-    ) <= 10]
-    dfCapped = dfShortendSecondNoun[dfShortendSecondNoun['frequency'] > 1000]
+    ) <= 15]
+    dfCapped = dfShortendSecondNoun[dfShortendSecondNoun['frequency'] > 100]
     dfWithoutConnectors = dfCapped[dfCapped['connectorParticle'].isna()]
     dfSorted = dfWithoutConnectors.sort_values('frequency', ascending=False)
 
-    n = 10
+    n = 8
 
     puzzles = generatePuzzle(dfSorted, n)
 
@@ -86,9 +86,6 @@ def main():
     with open('../data/puzzles.txt', 'w') as file:
         for string in tqdm(strings, desc='Saving...'):
             file.write(string + '\n')
-
-
-
 
 
 if __name__ == '__main__':
